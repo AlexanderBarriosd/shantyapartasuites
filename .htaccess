@@ -1,0 +1,132 @@
+# =============================================================================
+#  Shanty Apartasuites - sitio estatico
+#  Reemplaza a WordPress (Astra + MotoPress + WooCommerce + Site Kit).
+#  Canonico: https://shantyapartasuites.com/  (sin www, sin .html)
+# =============================================================================
+
+Options -Indexes
+DirectoryIndex index.html
+AddDefaultCharset UTF-8
+
+<IfModule mod_rewrite.c>
+RewriteEngine On
+
+# -----------------------------------------------------------------------------
+# 1) HTTPS + host canonico (sin www)
+# -----------------------------------------------------------------------------
+RewriteCond %{HTTPS} !=on
+RewriteCond %{HTTP:X-Forwarded-Proto} !https
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+
+RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
+RewriteRule ^ https://%1%{REQUEST_URI} [R=301,L]
+
+# -----------------------------------------------------------------------------
+# 2) URLs heredadas de WordPress -> equivalents en el sitio estatico (301)
+#    OJO: van antes de la regla generica de la seccion 5.
+# -----------------------------------------------------------------------------
+
+# La portada de WordPress estaba duplicada en /home/
+RewriteRule ^home/?$ / [R=301,L]
+
+# Apartamentos: MotoPress publicaba bajo /accommodation/<slug>/
+RewriteRule ^accommodation/apartamento-1-habitacion/?$ /apartamento-1-habitacion/ [R=301,L]
+RewriteRule ^accommodation/apartamento-2-habitaciones/?$ /apartamento-2-habitaciones/ [R=301,L]
+RewriteRule ^accommodation/duplex-3-habitaciones/?$ /duplex-3-habitaciones/ [R=301,L]
+
+# El boton "Reservas" apuntaba a una pagina que ya no existe como tal
+RewriteRule ^reservas/?$ /apartasuites/ [R=301,L]
+
+# -----------------------------------------------------------------------------
+# 3) Funcionalidad eliminada -> 410 Gone (no redirigir: no hay equivalente)
+# -----------------------------------------------------------------------------
+
+# WooCommerce (la tienda se cierra; la reserva es solo por WhatsApp)
+RewriteRule ^(tienda|carrito|finalizar-compra|mi-cuenta|mi-cuenta-2)/?$ - [G,L]
+
+# Motor de reservas MotoPress
+RewriteRule ^(buscar-disponibilidad|resultados-de-busqueda|cancelacion-de-reserva)/?$ - [G,L]
+RewriteRule ^confirmacion-de-reserva(/.*)?$ - [G,L]
+
+# Habitaciones de prueba / duplicadas que se crearon por error
+RewriteRule ^accommodation/(habitacion-test|habitacion-verano)/?$ - [G,L]
+
+# Paginas de relleno de WordPress
+RewriteRule ^(sample-page|hello-world)/?$ - [G,L]
+
+# -----------------------------------------------------------------------------
+# 4) Quitar la extension .html de las URLs publicas (301)
+# -----------------------------------------------------------------------------
+RewriteRule ^index\.html$ / [R=301,L]
+
+RewriteCond %{THE_REQUEST} \s/+(.+?)\.html[\s?] [NC]
+RewriteRule ^(.+)\.html$ /%1/ [R=301,L]
+
+# -----------------------------------------------------------------------------
+# 5) URLs limpias -> archivo .html (servido internamente, sin redirect visible)
+# -----------------------------------------------------------------------------
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_URI} !\.(css|js|mjs|json|xml|txt|png|jpe?g|webp|avif|gif|svg|ico|woff2?|ttf|eot|mp4|webm|pdf)$ [NC]
+RewriteCond %{THE_REQUEST} !\s/+(.+?)\.html[\s?] [NC]
+RewriteRule ^(.+?)/?$ $1.html [L]
+
+# -----------------------------------------------------------------------------
+# 6) Restos de WordPress: impedir acceso si siguen en el servidor
+# -----------------------------------------------------------------------------
+RewriteRule ^(wp-admin|wp-includes|wp-content|wp-json|wp-login\.php|xmlrpc\.php)(/|$) - [G,L]
+RewriteRule ^wp-config\.php$ - [G,L]
+
+</IfModule>
+
+# -----------------------------------------------------------------------------
+# 7) Pagina de error
+# -----------------------------------------------------------------------------
+ErrorDocument 404 /404.html
+
+# -----------------------------------------------------------------------------
+# 8) Compresion
+# -----------------------------------------------------------------------------
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/plain text/css text/xml
+  AddOutputFilterByType DEFLATE application/javascript application/x-javascript
+  AddOutputFilterByType DEFLATE application/json application/xml image/svg+xml
+</IfModule>
+
+# -----------------------------------------------------------------------------
+# 9) Cache de navegador
+# -----------------------------------------------------------------------------
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresDefault "access plus 1 week"
+
+  ExpiresByType image/webp        "access plus 1 year"
+  ExpiresByType image/avif        "access plus 1 year"
+  ExpiresByType image/png         "access plus 1 year"
+  ExpiresByType image/jpeg        "access plus 1 year"
+  ExpiresByType image/svg+xml     "access plus 1 year"
+  ExpiresByType image/x-icon      "access plus 1 year"
+  ExpiresByType font/woff2        "access plus 1 year"
+  ExpiresByType font/woff         "access plus 1 year"
+
+  ExpiresByType text/css          "access plus 1 month"
+  ExpiresByType application/javascript "access plus 1 month"
+
+  # El HTML no se cachea para que los cambios se vean de inmediato
+  ExpiresByType text/html          "access plus 0 seconds"
+</IfModule>
+
+<IfModule mod_headers.c>
+  <FilesMatch "\.(webp|avif|png|jpe?g|svg|woff2?)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# -----------------------------------------------------------------------------
+# 10) Archivos que nunca deben servirse
+# -----------------------------------------------------------------------------
+<FilesMatch "(^\.|\.(sql|log|ini|bak|old|md|json|lock)$)">
+  Require all denied
+</FilesMatch>

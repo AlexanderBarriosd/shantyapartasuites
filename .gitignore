@@ -1,0 +1,16 @@
+# Basura del sistema
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store
+AppleDouble
+
+# Editores
+*.swp
+*.swo
+*~
+.vscode/*
+!.vscode/settings.json
+
+# Node / herramientas locales
+node_modules/
