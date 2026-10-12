@@ -2,7 +2,7 @@
 
 Sitio web estático de **Shanty Apartasuites**, apartamentos de corta y larga estadía en Riomar, Barranquilla (Colombia). Incluye apartaestudio de 1 habitación, apartamento de 2 habitaciones y dúplex de 3 habitaciones, con reservas directas por WhatsApp.
 
-- **Sitio en producción:** https://shantyapartasuites.com/
+- **Sitio en producción:** https://shantyapartasuitesdemo.netlify.app/
 - **Canónico:** sin `www` y sin extensión `.html` (URLs limpias)
 
 ## Stack
